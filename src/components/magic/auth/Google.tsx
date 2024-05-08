@@ -12,6 +12,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   onAuthStateChanged as _onAuthStateChanged,
+  UserCredential,
 } from 'firebase/auth';
 
 import { firebaseAuth } from '../../firebase/config';
@@ -28,11 +29,10 @@ const Google = ({ token, setToken }: LoginProps) => {
     const checkLogin = async () => {
       try {
         if (magic) {
-          // const result = await magic?.oauth.getRedirectResult();
           const metadata = await magic?.user.getMetadata();
+          const isLogged = await magic?.user.getInfo();
+          console.log("USER INFO: ", isLogged)
           if (!metadata?.publicAddress) return;
-          setToken(result.magic.idToken);
-          saveUserInfo(result.magic.idToken, 'SOCIAL', metadata?.publicAddress);
           setLoadingFlag('false');
         }
       } catch (e) {
@@ -43,6 +43,19 @@ const Google = ({ token, setToken }: LoginProps) => {
 
     checkLogin();
   }, [magic, setToken]);
+
+  // useEffect(() => {
+  //   const unsubscribe = _onAuthStateChanged(firebaseAuth, (user) => {
+  //     setFirebaseUser(user);
+  //     if (user) {
+  //       user.getIdToken().then((idToken) => {
+  //         setToken(idToken);
+  //       });
+  //     }
+  //   });
+
+  //   return () => unsubscribe();
+  // }, [setToken]);
 
   const login = async () => {
     setLoadingFlag('true');
@@ -55,16 +68,22 @@ const Google = ({ token, setToken }: LoginProps) => {
         throw new Error('Google sign in failed');
       }
 
+      // Retreive ID token from google sign in result
+      const accessToken = await result.user.getIdToken();
+
       const DID = await magic?.openid.loginWithOIDC({
         // this oidcToken comes from the identity provider
-        jwt: result.user.accessToken,
+        jwt: accessToken,
         // this providerId is provided by Magic
-        providerId: "hznAxRkMRso8cXWeqVeHA390SDQAFkzFSp6hdNamH1Y=",
+        providerId: "GF_cGqbZIlhCcm7MAgcKcW7EMosM4lwhjAOQE5mZ5AE=",
       });
 
-      const user = await magic?.user.getInfo();
-      debugger
-      console.log("-0------", user)
+      const metadata = await magic?.user.getMetadata()
+
+      setToken(DID ?? '');
+      saveUserInfo(DID ?? '', 'SOCIAL', metadata?.publicAddress ?? '');
+
+      console.log(metadata)
     } catch (error) {
       console.error('Error signing in with Google', error);
     }
