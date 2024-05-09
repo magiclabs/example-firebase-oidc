@@ -8,6 +8,8 @@ import CardHeader from '@/components/ui/CardHeader';
 import CardLabel from '@/components/ui/CardLabel';
 import Spinner from '@/components/ui/Spinner';
 import { getNetworkName, getNetworkToken } from '@/utils/network';
+import { signOut } from 'firebase/auth';
+import { firebaseAuth } from '@/components/firebase/config';
 
 const UserInfo = ({ token, setToken }: LoginProps) => {
   const { magic, web3 } = useMagic();
@@ -50,6 +52,9 @@ const UserInfo = ({ token, setToken }: LoginProps) => {
 
   const disconnect = useCallback(async () => {
     if (magic) {
+      // Firebase sign out
+      await signOut(firebaseAuth);
+      // Magic sign out
       await logout(setToken, magic);
     }
   }, [magic, setToken]);

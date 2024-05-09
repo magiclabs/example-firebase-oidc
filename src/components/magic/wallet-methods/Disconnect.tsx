@@ -3,6 +3,8 @@ import { logout } from '@/utils/common';
 import { LoginProps } from '@/utils/types';
 import { useMagic } from '../MagicProvider';
 import Spinner from '@/components/ui/Spinner';
+import { signOut } from 'firebase/auth';
+import { firebaseAuth } from '@/components/firebase/config';
 
 const Disconnect = ({ setToken }: LoginProps) => {
   const { magic } = useMagic();
@@ -12,6 +14,9 @@ const Disconnect = ({ setToken }: LoginProps) => {
     if (!magic) return;
     try {
       setDisabled(true);
+      // Firebase sign out
+      await signOut(firebaseAuth);
+      // Magic sign out
       await logout(setToken, magic);
       setDisabled(false);
     } catch (error) {

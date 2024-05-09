@@ -8,11 +8,8 @@ import google from 'public/social/Google.svg';
 import Card from '../../ui/Card';
 import CardHeader from '../../ui/CardHeader';
 import {
-  type User,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged as _onAuthStateChanged,
-  UserCredential,
 } from 'firebase/auth';
 
 import { firebaseAuth } from '../../firebase/config';
@@ -27,11 +24,13 @@ const Google = ({ token, setToken }: LoginProps) => {
 
   useEffect(() => {
     const checkLogin = async () => {
+      const isLoggedIn = await magic?.user.isLoggedIn();
+
+      if (!isLoggedIn) return;
       try {
         if (magic) {
           const metadata = await magic?.user.getMetadata();
-          const isLogged = await magic?.user.getInfo();
-          console.log("USER INFO: ", isLogged)
+
           if (!metadata?.publicAddress) return;
           setLoadingFlag('false');
         }
@@ -44,19 +43,6 @@ const Google = ({ token, setToken }: LoginProps) => {
     checkLogin();
   }, [magic, setToken]);
 
-  // useEffect(() => {
-  //   const unsubscribe = _onAuthStateChanged(firebaseAuth, (user) => {
-  //     setFirebaseUser(user);
-  //     if (user) {
-  //       user.getIdToken().then((idToken) => {
-  //         setToken(idToken);
-  //       });
-  //     }
-  //   });
-
-  //   return () => unsubscribe();
-  // }, [setToken]);
-
   const login = async () => {
     setLoadingFlag('true');
     const provider = new GoogleAuthProvider();
@@ -68,14 +54,14 @@ const Google = ({ token, setToken }: LoginProps) => {
         throw new Error('Google sign in failed');
       }
 
-      // Retreive ID token from google sign in result
+      // Retrieve ID token from google sign in result
       const accessToken = await result.user.getIdToken();
 
       const DID = await magic?.openid.loginWithOIDC({
         // this oidcToken comes from the identity provider
         jwt: accessToken,
         // this providerId is provided by Magic
-        providerId: "GF_cGqbZIlhCcm7MAgcKcW7EMosM4lwhjAOQE5mZ5AE=",
+        providerId: process.env.NEXT_PUBLIC_PROVIDER_ID ?? '',
       });
 
       const metadata = await magic?.user.getMetadata()
